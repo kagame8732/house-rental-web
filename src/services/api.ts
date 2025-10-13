@@ -8,7 +8,6 @@ import type {
   User,
   Property,
   Tenant,
-  Lease,
   Maintenance,
   PaginationParams,
 } from "../types";
@@ -114,13 +113,13 @@ class ApiService {
   async checkPropertyAvailability(
     id: string
   ): Promise<
-    ApiResponse<{ propertyId: string; isAvailable: boolean; currentLease: any }>
+    ApiResponse<{ propertyId: string; isAvailable: boolean; currentTenant: any }>
   > {
     const response: AxiosResponse<
       ApiResponse<{
         propertyId: string;
         isAvailable: boolean;
-        currentLease: any;
+        currentTenant: any;
       }>
     > = await this.api.get(`/properties/${id}/availability`);
     return response.data;
@@ -195,111 +194,6 @@ class ApiService {
     const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(
       `/tenants/${id}`
     );
-    return response.data;
-  }
-
-  // Leases endpoints
-  async getLeases(params?: PaginationParams): Promise<ApiResponse<Lease[]>> {
-    const response: AxiosResponse<ApiResponse<Lease[]>> = await this.api.get(
-      "/leases",
-      { params }
-    );
-    return response.data;
-  }
-
-  async getLease(id: string): Promise<ApiResponse<Lease>> {
-    const response: AxiosResponse<ApiResponse<Lease>> = await this.api.get(
-      `/leases/${id}`
-    );
-    return response.data;
-  }
-
-  async createLease(
-    data: Omit<Lease, "id" | "createdAt" | "updatedAt">
-  ): Promise<ApiResponse<Lease>> {
-    const response: AxiosResponse<ApiResponse<Lease>> = await this.api.post(
-      "/leases",
-      data
-    );
-    return response.data;
-  }
-
-  async updateLease(
-    id: string,
-    data: Partial<Lease>
-  ): Promise<ApiResponse<Lease>> {
-    const response: AxiosResponse<ApiResponse<Lease>> = await this.api.put(
-      `/leases/${id}`,
-      data
-    );
-    return response.data;
-  }
-
-  async deleteLease(id: string): Promise<ApiResponse<void>> {
-    const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(
-      `/leases/${id}`
-    );
-    return response.data;
-  }
-
-  async checkExpiredLeases(): Promise<
-    ApiResponse<{ updatedCount: number; expiredLeases: Lease[] }>
-  > {
-    const response: AxiosResponse<
-      ApiResponse<{ updatedCount: number; expiredLeases: Lease[] }>
-    > = await this.api.get("/leases/expired/check");
-    return response.data;
-  }
-
-  async getLeasesExpiringSoon(
-    days: number = 30
-  ): Promise<ApiResponse<Lease[]>> {
-    const response: AxiosResponse<ApiResponse<Lease[]>> = await this.api.get(
-      "/leases/expiring-soon",
-      { params: { days } }
-    );
-    return response.data;
-  }
-
-  async getMonthlyRevenue(
-    year?: number,
-    month?: number
-  ): Promise<
-    ApiResponse<{
-      year: number;
-      month: number;
-      totalRevenue: number;
-      activeLeases: number;
-      revenueBreakdown: Array<{
-        leaseId: string;
-        propertyName: string;
-        tenantName: string;
-        monthlyRent: number;
-        startDate: string;
-        endDate: string;
-      }>;
-    }>
-  > {
-    const params: any = {};
-    if (year) params.year = year;
-    if (month) params.month = month;
-
-    const response: AxiosResponse<
-      ApiResponse<{
-        year: number;
-        month: number;
-        totalRevenue: number;
-        activeLeases: number;
-        revenueBreakdown: Array<{
-          leaseId: string;
-          propertyName: string;
-          tenantName: string;
-          monthlyRent: number;
-          startDate: string;
-          endDate: string;
-        }>;
-      }>
-    > = await this.api.get("/leases/monthly-revenue", { params });
     return response.data;
   }
 

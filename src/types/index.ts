@@ -12,8 +12,9 @@ export interface Property {
   address: string;
   type: "house" | "apartment";
   status: "active" | "inactive";
+  monthlyRent?: number;
   ownerId: string;
-  isAvailable?: boolean; // Added availability status
+  isAvailable?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,23 +26,9 @@ export interface Tenant {
   email?: string;
   address?: string;
   status: "active" | "inactive" | "evicted";
+  payment?: number;
   propertyId: string;
   property?: Property;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Lease {
-  id: string;
-  propertyId: string;
-  tenantId: string;
-  startDate: string;
-  endDate: string;
-  monthlyRent: number;
-  status: "active" | "expired" | "terminated";
-  notes?: string;
-  property?: Property;
-  tenant?: Tenant;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,5 +81,5 @@ export interface PaginationParams {
   type?: string;
   priority?: string;
   propertyId?: string;
-  tenantId?: string;
 }
+

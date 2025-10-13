@@ -3,6 +3,7 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Property } from "../types";
+import { formatCurrency } from "../utils/currency";
 import toast from "react-hot-toast";
 
 const Properties: React.FC = () => {
@@ -17,6 +18,7 @@ const Properties: React.FC = () => {
     address: "",
     type: "house" as "house" | "apartment",
     status: "active" as "active" | "inactive",
+    monthlyRent: "",
   });
 
   useEffect(() => {
@@ -68,19 +70,34 @@ const Properties: React.FC = () => {
     try {
       setLoading(true);
 
+      const submitData = {
+        ...formData,
+        monthlyRent:
+          formData.monthlyRent && formData.monthlyRent.trim() !== ""
+            ? parseFloat(formData.monthlyRent)
+            : undefined,
+      };
+
       if (editingProperty) {
-        await apiService.updateProperty(editingProperty.id, formData);
+        await apiService.updateProperty(editingProperty.id, submitData);
         toast.success("Property updated successfully");
       } else {
-        await apiService.createProperty(formData);
+        await apiService.createProperty(submitData);
         toast.success("Property created successfully");
       }
 
-      setFormData({ name: "", address: "", type: "house", status: "active" });
+      setFormData({
+        name: "",
+        address: "",
+        type: "house",
+        status: "active",
+        monthlyRent: "",
+      });
       setShowForm(false);
       setEditingProperty(null);
       await loadProperties();
     } catch (err: any) {
+      console.error("Property submission error:", err);
       toast.error(err.message || "Failed to save property");
     } finally {
       setLoading(false);
@@ -93,6 +110,7 @@ const Properties: React.FC = () => {
       address: property.address,
       type: property.type,
       status: property.status,
+      monthlyRent: property.monthlyRent?.toString() || "",
     });
     setEditingProperty(property);
     setShowForm(true);
@@ -114,7 +132,13 @@ const Properties: React.FC = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: "", address: "", type: "house", status: "active" });
+    setFormData({
+      name: "",
+      address: "",
+      type: "house",
+      status: "active",
+      monthlyRent: "",
+    });
     setShowForm(false);
     setEditingProperty(null);
   };
@@ -216,6 +240,23 @@ const Properties: React.FC = () => {
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Monthly Rent (RWF)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.monthlyRent}
+                    onChange={(e) =>
+                      setFormData({ ...formData, monthlyRent: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter monthly rent amount"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center space-x-3 pt-4">
@@ -283,6 +324,9 @@ const Properties: React.FC = () => {
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Monthly Rent
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Availability
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -321,6 +365,11 @@ const Properties: React.FC = () => {
                         >
                           {property.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {formatCurrency(property.monthlyRent)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span

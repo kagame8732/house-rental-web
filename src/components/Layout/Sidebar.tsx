@@ -4,7 +4,6 @@ import {
   Home,
   Building2,
   Users,
-  FileText,
   Wrench,
   LogOut,
   X,
@@ -24,7 +23,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Properties", href: "/properties", icon: Building2 },
     { name: "Tenants", href: "/tenants", icon: Users },
-    { name: "Leases", href: "/leases", icon: FileText },
     { name: "Maintenance", href: "/maintenance", icon: Wrench },
   ];
 

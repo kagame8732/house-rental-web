@@ -1,24 +1,20 @@
 import React from "react";
-import { useDashboardData } from "../hooks/useDashboardData";
+import { formatCurrency } from "../utils/currency";
 import { DashboardHeader } from "../components/DashboardHeader";
 import { StatsGrid } from "../components/StatsGrid";
-import { RecentLeases } from "../components/RecentLeases";
 import { UrgentMaintenance } from "../components/UrgentMaintenance";
-import { ExpiringLeases } from "../components/ExpiringLeases";
+import { useDashboardData } from "../hooks/useDashboardData";
+import type { Tenant } from "../types";
 
 const Dashboard: React.FC = () => {
   const {
     stats,
-    recentLeases,
+    recentTenants,
     urgentMaintenance,
-    expiringLeases,
     loading,
-    leasesPage,
     maintenancePage,
-    leasesPagination,
     maintenancePagination,
     handleRefresh,
-    handleLeasesPageChange,
     handleMaintenancePageChange,
   } = useDashboardData();
 
@@ -37,12 +33,51 @@ const Dashboard: React.FC = () => {
       <StatsGrid stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentLeases
-          leases={recentLeases}
-          currentPage={leasesPage}
-          totalPages={leasesPagination?.totalPages || 1}
-          onPageChange={handleLeasesPageChange}
-        />
+        {/* Recent Tenants */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Recent Tenants
+            </h3>
+          </div>
+          <div className="card-content">
+            {recentTenants.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No tenants found</p>
+            ) : (
+              <div className="space-y-3">
+                {recentTenants.map((tenant: Tenant) => (
+                  <div
+                    key={tenant.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{tenant.name}</p>
+                      <p className="text-sm text-gray-500">{tenant.phone}</p>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          tenant.status === "active"
+                            ? "bg-green-100 text-green-800"
+                            : tenant.status === "inactive"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {tenant.status}
+                      </span>
+                      {tenant.payment && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {formatCurrency(tenant.payment)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <UrgentMaintenance
           maintenance={urgentMaintenance}
@@ -51,8 +86,6 @@ const Dashboard: React.FC = () => {
           onPageChange={handleMaintenancePageChange}
         />
       </div>
-
-      <ExpiringLeases leases={expiringLeases} />
     </div>
   );
 };

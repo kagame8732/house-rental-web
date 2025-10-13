@@ -1,6 +1,4 @@
 import React from "react";
-import { RefreshCw } from "lucide-react";
-
 interface DashboardHeaderProps {
   loading: boolean;
   onRefresh: () => void;
@@ -21,10 +19,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <button
         onClick={onRefresh}
         disabled={loading}
-        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-        Refresh
+        {loading ? "Refreshing..." : "Refresh"}
       </button>
     </div>
   );
