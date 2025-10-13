@@ -1,13 +1,14 @@
 import React from "react";
-import { Building2, Users, FileText, Wrench, TrendingUp } from "lucide-react";
+import { Building2, Users, UserCheck, Wrench, TrendingUp } from "lucide-react";
+import { formatCurrency } from "../utils/currency";
 import { StatCard } from "./StatCard";
 
 interface DashboardStats {
   totalProperties: number;
   totalTenants: number;
-  activeLeases: number;
+  activeTenants: number;
   pendingMaintenance: number;
-  monthlyRevenue: number;
+  totalMonthlyRevenue: number;
 }
 
 interface StatsGridProps {
@@ -31,9 +32,9 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
       bgColor: "bg-green-50",
     },
     {
-      title: "Active Leases",
-      value: stats.activeLeases,
-      icon: FileText,
+      title: "Active Tenants",
+      value: stats.activeTenants,
+      icon: UserCheck,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
     },
@@ -46,7 +47,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
     },
     {
       title: "Monthly Revenue",
-      value: `RWF ${stats.monthlyRevenue.toLocaleString()}`,
+      value: formatCurrency(stats.totalMonthlyRevenue),
       icon: TrendingUp,
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",

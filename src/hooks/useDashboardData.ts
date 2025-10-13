@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import type { Lease, Maintenance } from "../types";
+import type { Tenant, Maintenance, Property } from "../types";
 import toast from "react-hot-toast";
 
 interface DashboardStats {
   totalProperties: number;
   totalTenants: number;
-  activeLeases: number;
+  activeTenants: number;
   pendingMaintenance: number;
-  monthlyRevenue: number;
+  totalMonthlyRevenue: number;
 }
 
 interface PaginationInfo {
@@ -26,21 +26,21 @@ export const useDashboardData = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalProperties: 0,
     totalTenants: 0,
-    activeLeases: 0,
+    activeTenants: 0,
     pendingMaintenance: 0,
-    monthlyRevenue: 0,
+    totalMonthlyRevenue: 0,
   });
 
   // Data state
-  const [recentLeases, setRecentLeases] = useState<Lease[]>([]);
+  const [recentTenants, setRecentTenants] = useState<Tenant[]>([]);
   const [urgentMaintenance, setUrgentMaintenance] = useState<Maintenance[]>([]);
-  const [expiringLeases, setExpiringLeases] = useState<Lease[]>([]);
+  const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Pagination state
-  const [leasesPage, setLeasesPage] = useState(1);
+  const [tenantsPage, setTenantsPage] = useState(1);
   const [maintenancePage, setMaintenancePage] = useState(1);
-  const [leasesPagination, setLeasesPagination] =
+  const [tenantsPagination, setTenantsPagination] =
     useState<PaginationInfo | null>(null);
   const [maintenancePagination, setMaintenancePagination] =
     useState<PaginationInfo | null>(null);
@@ -58,18 +58,14 @@ export const useDashboardData = () => {
       const [
         propertiesRes,
         tenantsRes,
-        leasesRes,
         maintenanceRes,
-        activeLeasesRes,
+        activeTenantsRes,
         pendingMaintenanceRes,
-        expiringLeasesRes,
-        monthlyRevenueRes,
       ] = await Promise.all([
         apiService.getProperties({ limit: 10 }),
-        apiService.getTenants({ limit: 10 }),
-        apiService.getLeases({
-          page: leasesPage,
-          limit: 2,
+        apiService.getTenants({
+          page: tenantsPage,
+          limit: 5,
           sortBy: "createdAt",
           sortOrder: "DESC",
         }),
@@ -79,43 +75,43 @@ export const useDashboardData = () => {
           sortBy: "priority",
           sortOrder: "DESC",
         }),
-        apiService.getLeases({ status: "active" }),
+        apiService.getTenants({ status: "active" }),
         apiService.getMaintenance({ status: "pending" }),
-        apiService.getLeasesExpiringSoon(30),
-        apiService.getMonthlyRevenue(),
       ]);
 
       const properties = propertiesRes.data || [];
       const tenants = tenantsRes.data || [];
-      const leases = leasesRes.data || [];
       const maintenance = maintenanceRes.data || [];
+      const activeTenants = activeTenantsRes.data || [];
+
+      // Calculate total monthly revenue from properties with monthly rent
+      const totalMonthlyRevenue = properties.reduce((sum, property) => {
+        return sum + (property.monthlyRent || 0);
+      }, 0);
 
       // Calculate stats
       setStats({
         totalProperties: propertiesRes.pagination?.total || properties.length,
         totalTenants: tenantsRes.pagination?.total || tenants.length,
-        activeLeases:
-          activeLeasesRes.pagination?.total ||
-          activeLeasesRes.data?.length ||
-          0,
+        activeTenants: activeTenantsRes.pagination?.total || activeTenants.length,
         pendingMaintenance:
           pendingMaintenanceRes.pagination?.total ||
           pendingMaintenanceRes.data?.length ||
           0,
-        monthlyRevenue: monthlyRevenueRes.data?.totalRevenue || 0,
+        totalMonthlyRevenue,
       });
 
       // Set data
-      setRecentLeases(leases);
+      setRecentTenants(tenants);
+      setProperties(properties);
       setUrgentMaintenance(
         maintenance
           .filter((m) => m.priority === "urgent" || m.priority === "high")
           .slice(0, 5)
       );
-      setExpiringLeases(expiringLeasesRes.data || []);
 
       // Set pagination info
-      setLeasesPagination(leasesRes.pagination || null);
+      setTenantsPagination(tenantsRes.pagination || null);
       setMaintenancePagination(maintenanceRes.pagination || null);
 
       console.log("Dashboard data loaded successfully");
@@ -128,7 +124,7 @@ export const useDashboardData = () => {
     } finally {
       setLoading(false);
     }
-  }, [leasesPage, maintenancePage, user, token]);
+  }, [tenantsPage, maintenancePage, user, token]);
 
   const handleRefresh = useCallback(() => {
     toast.loading("Refreshing dashboard...", { id: "refresh" });
@@ -137,8 +133,8 @@ export const useDashboardData = () => {
     });
   }, [loadDashboardData]);
 
-  const handleLeasesPageChange = useCallback((newPage: number) => {
-    setLeasesPage(newPage);
+  const handleTenantsPageChange = useCallback((newPage: number) => {
+    setTenantsPage(newPage);
   }, []);
 
   const handleMaintenancePageChange = useCallback((newPage: number) => {
@@ -153,20 +149,20 @@ export const useDashboardData = () => {
   return {
     // Data
     stats,
-    recentLeases,
+    recentTenants,
     urgentMaintenance,
-    expiringLeases,
+    properties,
     loading,
 
     // Pagination
-    leasesPage,
+    tenantsPage,
     maintenancePage,
-    leasesPagination,
+    tenantsPagination,
     maintenancePagination,
 
     // Actions
     handleRefresh,
-    handleLeasesPageChange,
+    handleTenantsPageChange,
     handleMaintenancePageChange,
   };
 };

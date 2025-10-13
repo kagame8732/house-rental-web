@@ -3,12 +3,16 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Tenant, Property } from "../types";
+import { formatCurrency } from "../utils/currency";
 import toast from "react-hot-toast";
 
 const Tenants: React.FC = () => {
   const { user, token } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [allProperties, setAllProperties] = useState<Property[]>([]); // All properties for display
+  const [availableProperties, setAvailableProperties] = useState<Property[]>(
+    []
+  ); // Available properties for form
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
@@ -20,6 +24,7 @@ const Tenants: React.FC = () => {
     address: "",
     propertyId: "",
     status: "active" as "active" | "inactive" | "evicted",
+    payment: "",
   });
 
   useEffect(() => {
@@ -31,12 +36,15 @@ const Tenants: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [tenantsRes, propertiesRes] = await Promise.all([
-        apiService.getTenants(),
-        apiService.getAvailableProperties(), // Use available properties only
-      ]);
+      const [tenantsRes, allPropertiesRes, availablePropertiesRes] =
+        await Promise.all([
+          apiService.getTenants(),
+          apiService.getProperties(), // All properties for display
+          apiService.getAvailableProperties(), // Available properties for form
+        ]);
       setTenants(tenantsRes.data || []);
-      setProperties(propertiesRes.data || []);
+      setAllProperties(allPropertiesRes.data || []);
+      setAvailableProperties(availablePropertiesRes.data || []);
       toast.success("Data loaded successfully");
     } catch (err: any) {
       toast.error(err.message || "Failed to load data");
@@ -50,11 +58,16 @@ const Tenants: React.FC = () => {
     try {
       setLoading(true);
 
+      const submitData = {
+        ...formData,
+        payment: formData.payment ? parseFloat(formData.payment) : undefined,
+      };
+
       if (editingTenant) {
-        await apiService.updateTenant(editingTenant.id, formData);
+        await apiService.updateTenant(editingTenant.id, submitData);
         toast.success("Tenant updated successfully");
       } else {
-        await apiService.createTenant(formData);
+        await apiService.createTenant(submitData);
         toast.success("Tenant created successfully");
       }
 
@@ -65,6 +78,7 @@ const Tenants: React.FC = () => {
         address: "",
         propertyId: "",
         status: "active",
+        payment: "",
       });
       setShowForm(false);
       setEditingTenant(null);
@@ -94,6 +108,7 @@ const Tenants: React.FC = () => {
         address: tenant.address || "",
         propertyId: tenant.propertyId,
         status: tenant.status,
+        payment: tenant.payment?.toString() || "",
       });
       setEditingTenant(tenant);
       setShowForm(true);
@@ -127,6 +142,7 @@ const Tenants: React.FC = () => {
       address: "",
       propertyId: "",
       status: "active",
+      payment: "",
     });
     setShowForm(false);
     setEditingTenant(null);
@@ -135,7 +151,7 @@ const Tenants: React.FC = () => {
   };
 
   const getPropertyName = (propertyId: string) => {
-    const property = properties.find((p) => p.id === propertyId);
+    const property = allProperties.find((p) => p.id === propertyId);
     return property ? property.name : "Unknown Property";
   };
 
@@ -239,15 +255,30 @@ const Tenants: React.FC = () => {
                   <select
                     required
                     value={formData.propertyId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, propertyId: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const selectedPropertyId = e.target.value;
+                      const selectedProperty = availableProperties.find(
+                        (p) => p.id === selectedPropertyId
+                      );
+
+                      setFormData({
+                        ...formData,
+                        propertyId: selectedPropertyId,
+                        payment:
+                          selectedProperty?.monthlyRent?.toString() || "",
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select a property</option>
-                    {properties.map((property) => (
+                    {availableProperties.map((property) => (
                       <option key={property.id} value={property.id}>
-                        {property.name} - {property.address}
+                        {property.name} - {property.address}{" "}
+                        {property.monthlyRent
+                          ? `(RWF ${property.monthlyRent.toLocaleString(
+                              "en-US"
+                            )})`
+                          : ""}
                       </option>
                     ))}
                   </select>
@@ -274,6 +305,23 @@ const Tenants: React.FC = () => {
                     <option value="inactive">Inactive</option>
                     <option value="evicted">Evicted</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Payment Amount (RWF)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.payment}
+                    onChange={(e) =>
+                      setFormData({ ...formData, payment: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter payment amount"
+                  />
                 </div>
               </div>
 
@@ -338,6 +386,9 @@ const Tenants: React.FC = () => {
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -385,6 +436,11 @@ const Tenants: React.FC = () => {
                         >
                           {tenant.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {formatCurrency(tenant.payment)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(tenant.createdAt).toLocaleDateString()}
