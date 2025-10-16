@@ -83,6 +83,8 @@ const Dashboard: React.FC = () => {
           maintenance={urgentMaintenance}
           currentPage={maintenancePage}
           totalPages={maintenancePagination?.totalPages || 1}
+          totalItems={maintenancePagination?.total || 0}
+          itemsPerPage={maintenancePagination?.limit || 10}
           onPageChange={handleMaintenancePageChange}
         />
       </div>

@@ -104,15 +104,21 @@ export const useDashboardData = () => {
       // Set data
       setRecentTenants(tenants);
       setProperties(properties);
-      setUrgentMaintenance(
-        maintenance
-          .filter((m) => m.priority === "urgent" || m.priority === "high")
-          .slice(0, 5)
-      );
+      
+      // Filter urgent maintenance and set pagination for urgent items only
+      const urgentItems = maintenance.filter((m) => m.priority === "urgent" || m.priority === "high");
+      setUrgentMaintenance(urgentItems.slice(0, 5));
 
       // Set pagination info
       setTenantsPagination(tenantsRes.pagination || null);
-      setMaintenancePagination(maintenanceRes.pagination || null);
+      
+      // Create pagination info for urgent maintenance only
+      setMaintenancePagination({
+        page: 1,
+        limit: 5,
+        total: urgentItems.length,
+        totalPages: Math.ceil(urgentItems.length / 5),
+      });
 
       console.log("Dashboard data loaded successfully");
       toast.success("Dashboard data loaded successfully");

@@ -27,6 +27,8 @@ export interface Tenant {
   address?: string;
   status: "active" | "inactive" | "evicted";
   payment?: number;
+  paymentDate?: string;
+  paymentMethod?: "cash" | "bank" | "mobile_money";
   propertyId: string;
   property?: Property;
   createdAt: string;
@@ -49,7 +51,7 @@ export interface Maintenance {
   updatedAt: string;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
