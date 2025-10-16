@@ -6,6 +6,7 @@ import type { Maintenance, Property, PaginationParams } from "../types";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
 import MaintenanceSearchAndFilter from "../components/MaintenanceSearchAndFilter";
+import { ExportData } from "../components/ExportData";
 
 const MaintenancePage: React.FC = () => {
   const { user, token } = useAuth();
@@ -574,6 +575,24 @@ const MaintenancePage: React.FC = () => {
         properties={properties}
         onClearFilters={handleClearFilters}
       />
+
+      {/* Export Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Export Maintenance
+            </h2>
+            <p className="text-sm text-gray-600">Download maintenance data</p>
+          </div>
+          <ExportData
+            maintenance={maintenance}
+            properties={properties}
+            dataType="maintenance"
+            title="Maintenance Report"
+          />
+        </div>
+      </div>
 
       {/* Maintenance List */}
       <div className="card">

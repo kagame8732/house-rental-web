@@ -7,6 +7,7 @@ import { formatCurrency } from "../utils/currency";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
 import SearchAndFilter from "../components/SearchAndFilter";
+import { ExportData } from "../components/ExportData";
 
 const Tenants: React.FC = () => {
   const { user, token } = useAuth();
@@ -899,6 +900,24 @@ const Tenants: React.FC = () => {
             properties={allProperties}
             onClearFilters={handleClearFilters}
           />
+
+          {/* Export Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Export Tenants
+                </h2>
+                <p className="text-sm text-gray-600">Download tenants data</p>
+              </div>
+              <ExportData
+                tenants={tenants}
+                properties={allProperties}
+                dataType="tenants"
+                title="Tenants Report"
+              />
+            </div>
+          </div>
 
           {/* Tenants List */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200">

@@ -9,7 +9,10 @@ interface DashboardStats {
   totalTenants: number;
   activeTenants: number;
   pendingMaintenance: number;
-  totalMonthlyRevenue: number;
+  totalRentCollected: number;
+  outstandingRent: number;
+  occupancyRate: number;
+  annualRevenue: number;
 }
 
 interface PaginationInfo {
@@ -28,12 +31,16 @@ export const useDashboardData = () => {
     totalTenants: 0,
     activeTenants: 0,
     pendingMaintenance: 0,
-    totalMonthlyRevenue: 0,
+    totalRentCollected: 0,
+    outstandingRent: 0,
+    occupancyRate: 0,
+    annualRevenue: 0,
   });
 
   // Data state
   const [recentTenants, setRecentTenants] = useState<Tenant[]>([]);
   const [urgentMaintenance, setUrgentMaintenance] = useState<Maintenance[]>([]);
+  const [allMaintenance, setAllMaintenance] = useState<Maintenance[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,6 +68,7 @@ export const useDashboardData = () => {
         maintenanceRes,
         activeTenantsRes,
         pendingMaintenanceRes,
+        allTenantsRes,
       ] = await Promise.all([
         apiService.getProperties({ limit: 10 }),
         apiService.getTenants({
@@ -77,41 +85,86 @@ export const useDashboardData = () => {
         }),
         apiService.getTenants({ status: "active" }),
         apiService.getMaintenance({ status: "pending" }),
+        apiService.getTenants(), // Get all tenants for analytics
       ]);
 
       const properties = propertiesRes.data || [];
       const tenants = tenantsRes.data || [];
       const maintenance = maintenanceRes.data || [];
       const activeTenants = activeTenantsRes.data || [];
+      const allTenants = allTenantsRes.data || [];
 
-      // Calculate total monthly revenue from properties with monthly rent
-      const totalMonthlyRevenue = properties.reduce((sum, property) => {
-        return sum + (property.monthlyRent || 0);
+      // Calculate analytics metrics
+      const totalRentCollected = allTenants.reduce((sum, tenant) => {
+        return sum + (tenant.totalAmount || 0);
       }, 0);
+
+      // Outstanding rent calculation
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
+
+      let outstandingRent = 0;
+      allTenants.forEach((tenant) => {
+        if (tenant.status === "active") {
+          const property = properties.find((p) => p.id === tenant.propertyId);
+          if (property) {
+            const startDate = tenant.stayStartDate
+              ? new Date(tenant.stayStartDate)
+              : null;
+            if (startDate) {
+              const monthsSinceStart =
+                (currentYear - startDate.getFullYear()) * 12 +
+                (currentMonth - startDate.getMonth());
+              const expectedTotal =
+                monthsSinceStart * (property.monthlyRent || 0);
+              const actualPaid = tenant.totalAmount || 0;
+              outstandingRent += Math.max(0, expectedTotal - actualPaid);
+            }
+          }
+        }
+      });
+
+      // Occupancy rate
+      const totalUnits = propertiesRes.pagination?.total || properties.length;
+      const occupiedUnits =
+        activeTenantsRes.pagination?.total || activeTenants.length;
+      const occupancyRate =
+        totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
+
+      // Annual revenue (projected) - based on total rent collected
+      const annualRevenue = totalRentCollected > 0 ? (totalRentCollected / Math.max(1, allTenants.length)) * 12 : 0;
 
       // Calculate stats
       setStats({
         totalProperties: propertiesRes.pagination?.total || properties.length,
         totalTenants: tenantsRes.pagination?.total || tenants.length,
-        activeTenants: activeTenantsRes.pagination?.total || activeTenants.length,
+        activeTenants:
+          activeTenantsRes.pagination?.total || activeTenants.length,
         pendingMaintenance:
           pendingMaintenanceRes.pagination?.total ||
           pendingMaintenanceRes.data?.length ||
           0,
-        totalMonthlyRevenue,
+        totalRentCollected,
+        outstandingRent,
+        occupancyRate,
+        annualRevenue,
       });
 
       // Set data
       setRecentTenants(tenants);
       setProperties(properties);
-      
+      setAllMaintenance(maintenance);
+
       // Filter urgent maintenance and set pagination for urgent items only
-      const urgentItems = maintenance.filter((m) => m.priority === "urgent" || m.priority === "high");
+      const urgentItems = maintenance.filter(
+        (m) => m.priority === "urgent" || m.priority === "high"
+      );
       setUrgentMaintenance(urgentItems.slice(0, 5));
 
       // Set pagination info
       setTenantsPagination(tenantsRes.pagination || null);
-      
+
       // Create pagination info for urgent maintenance only
       setMaintenancePagination({
         page: 1,
@@ -157,6 +210,7 @@ export const useDashboardData = () => {
     stats,
     recentTenants,
     urgentMaintenance,
+    allMaintenance,
     properties,
     loading,
 

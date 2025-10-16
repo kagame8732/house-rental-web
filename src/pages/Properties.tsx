@@ -7,6 +7,7 @@ import { formatCurrency } from "../utils/currency";
 import toast from "react-hot-toast";
 import Pagination from "../components/Pagination";
 import PropertiesSearchAndFilter from "../components/PropertiesSearchAndFilter";
+import { ExportData } from "../components/ExportData";
 
 const Properties: React.FC = () => {
   const { user, token } = useAuth();
@@ -476,6 +477,23 @@ const Properties: React.FC = () => {
         onSortOrderChange={handleSortOrderChange}
         onClearFilters={handleClearFilters}
       />
+
+      {/* Export Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Export Properties
+            </h2>
+            <p className="text-sm text-gray-600">Download properties data</p>
+          </div>
+          <ExportData
+            properties={properties}
+            dataType="properties"
+            title="Properties Report"
+          />
+        </div>
+      </div>
 
       {/* Properties List */}
       <div className="card">

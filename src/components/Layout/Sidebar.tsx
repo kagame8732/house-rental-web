@@ -1,13 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Home,
-  Building2,
-  Users,
-  Wrench,
-  LogOut,
-  X,
-} from "lucide-react";
+import { Home, Building2, Users, Wrench, LogOut, X } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface SidebarProps {
