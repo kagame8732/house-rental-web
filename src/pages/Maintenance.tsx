@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import type { Maintenance, Property } from "../types";
+import type { Maintenance, Property, PaginationParams } from "../types";
 import toast from "react-hot-toast";
+import Pagination from "../components/Pagination";
+import MaintenanceSearchAndFilter from "../components/MaintenanceSearchAndFilter";
+import { ExportData } from "../components/ExportData";
 
 const MaintenancePage: React.FC = () => {
   const { user, token } = useAuth();
@@ -13,6 +16,20 @@ const MaintenancePage: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingMaintenance, setEditingMaintenance] =
     useState<Maintenance | null>(null);
+
+  // Pagination and filtering state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("");
+  const [propertyFilter, setPropertyFilter] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -25,28 +42,186 @@ const MaintenancePage: React.FC = () => {
     status: "pending" as "pending" | "in_progress" | "completed" | "cancelled",
   });
 
+  const loadData = useCallback(
+    async (page = pagination.page) => {
+      try {
+        setLoading(true);
+
+        // Build pagination parameters
+        const params: PaginationParams = {
+          page,
+          limit: pagination.limit,
+          sortBy,
+          sortOrder,
+          search: searchTerm || undefined,
+          status: statusFilter || undefined,
+          priority: priorityFilter || undefined,
+          propertyId: propertyFilter || undefined,
+        };
+
+        const [maintenanceRes, propertiesRes] = await Promise.all([
+          apiService.getMaintenance(params),
+          apiService.getProperties(),
+        ]);
+
+        setMaintenance(maintenanceRes.data || []);
+        setProperties(propertiesRes.data || []);
+
+        // Update pagination info
+        if (maintenanceRes.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            page: maintenanceRes.pagination!.page,
+            total: maintenanceRes.pagination!.total,
+            totalPages: maintenanceRes.pagination!.totalPages,
+          }));
+        }
+
+        if (page === 1) {
+          toast.success("Data loaded successfully");
+        }
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      pagination.page,
+      pagination.limit,
+      sortBy,
+      sortOrder,
+      searchTerm,
+      statusFilter,
+      priorityFilter,
+      propertyFilter,
+    ]
+  );
+
+  // Filter change handlers
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page }));
+    // Load data with the new page immediately
+    loadDataWithPage(page);
+  };
+
+  const loadDataWithPage = useCallback(
+    async (page: number) => {
+      try {
+        setLoading(true);
+
+        // Build pagination parameters
+        const params: PaginationParams = {
+          page,
+          limit: pagination.limit,
+          sortBy,
+          sortOrder,
+          search: searchTerm || undefined,
+          status: statusFilter || undefined,
+          priority: priorityFilter || undefined,
+          propertyId: propertyFilter || undefined,
+        };
+
+        const [maintenanceRes, propertiesRes] = await Promise.all([
+          apiService.getMaintenance(params),
+          apiService.getProperties(),
+        ]);
+
+        setMaintenance(maintenanceRes.data || []);
+        setProperties(propertiesRes.data || []);
+
+        // Update pagination info
+        if (maintenanceRes.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            page: maintenanceRes.pagination!.page,
+            total: maintenanceRes.pagination!.total,
+            totalPages: maintenanceRes.pagination!.totalPages,
+          }));
+        }
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      pagination.limit,
+      sortBy,
+      sortOrder,
+      searchTerm,
+      statusFilter,
+      priorityFilter,
+      propertyFilter,
+    ]
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handlePriorityChange = (value: string) => {
+    setPriorityFilter(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handlePropertyChange = (value: string) => {
+    setPropertyFilter(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortByChange = (value: string) => {
+    setSortBy(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortOrderChange = (value: "ASC" | "DESC") => {
+    setSortOrder(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setPriorityFilter("");
+    setPropertyFilter("");
+    setSortBy("createdAt");
+    setSortOrder("DESC");
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
   useEffect(() => {
     if (user && token) {
       loadData();
     }
-  }, [user, token]);
+  }, [user, token, loadData]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [maintenanceRes, propertiesRes] = await Promise.all([
-        apiService.getMaintenance(),
-        apiService.getProperties(),
-      ]);
-      setMaintenance(maintenanceRes.data || []);
-      setProperties(propertiesRes.data || []);
-      toast.success("Data loaded successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load data");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (user && token) {
+        loadDataWithPage(1);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    searchTerm,
+    statusFilter,
+    priorityFilter,
+    propertyFilter,
+    sortBy,
+    sortOrder,
+    user,
+    token,
+    loadDataWithPage,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -383,6 +558,42 @@ const MaintenancePage: React.FC = () => {
         </div>
       )}
 
+      {/* Search and Filter */}
+      <MaintenanceSearchAndFilter
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        statusFilter={statusFilter}
+        onStatusChange={handleStatusChange}
+        priorityFilter={priorityFilter}
+        onPriorityChange={handlePriorityChange}
+        propertyFilter={propertyFilter}
+        onPropertyChange={handlePropertyChange}
+        sortBy={sortBy}
+        onSortByChange={handleSortByChange}
+        sortOrder={sortOrder}
+        onSortOrderChange={handleSortOrderChange}
+        properties={properties}
+        onClearFilters={handleClearFilters}
+      />
+
+      {/* Export Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Export Maintenance
+            </h2>
+            <p className="text-sm text-gray-600">Download maintenance data</p>
+          </div>
+          <ExportData
+            maintenance={maintenance}
+            properties={properties}
+            dataType="maintenance"
+            title="Maintenance Report"
+          />
+        </div>
+      </div>
+
       {/* Maintenance List */}
       <div className="card">
         <div className="card-header">
@@ -500,6 +711,17 @@ const MaintenancePage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit}
+            />
           )}
         </div>
       </div>

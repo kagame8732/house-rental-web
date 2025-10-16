@@ -23,10 +23,17 @@ export interface Tenant {
   id: string;
   name: string;
   phone: string;
+  idNumber: string;
   email?: string;
   address?: string;
   status: "active" | "inactive" | "evicted";
   payment?: number;
+  paymentDate?: string;
+  paymentMethod?: "cash" | "bank" | "mobile_money";
+  monthsPaid?: number;
+  stayStartDate?: string;
+  stayEndDate?: string;
+  totalAmount?: number;
   propertyId: string;
   property?: Property;
   createdAt: string;
@@ -49,7 +56,7 @@ export interface Maintenance {
   updatedAt: string;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
@@ -82,4 +89,3 @@ export interface PaginationParams {
   priority?: string;
   propertyId?: string;
 }
-

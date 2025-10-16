@@ -3,6 +3,7 @@ import { formatCurrency } from "../utils/currency";
 import { DashboardHeader } from "../components/DashboardHeader";
 import { StatsGrid } from "../components/StatsGrid";
 import { UrgentMaintenance } from "../components/UrgentMaintenance";
+import { ExportData } from "../components/ExportData";
 import { useDashboardData } from "../hooks/useDashboardData";
 import type { Tenant } from "../types";
 
@@ -11,6 +12,8 @@ const Dashboard: React.FC = () => {
     stats,
     recentTenants,
     urgentMaintenance,
+    allMaintenance,
+    properties,
     loading,
     maintenancePage,
     maintenancePagination,
@@ -31,6 +34,25 @@ const Dashboard: React.FC = () => {
       <DashboardHeader loading={loading} onRefresh={handleRefresh} />
 
       <StatsGrid stats={stats} />
+
+      {/* Export Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Export Data</h2>
+            <p className="text-sm text-gray-600">
+              Download complete business data
+            </p>
+          </div>
+          <ExportData
+            tenants={recentTenants}
+            properties={properties}
+            maintenance={allMaintenance}
+            dataType="all"
+            title="Complete Business Report"
+          />
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Tenants */}
@@ -83,6 +105,8 @@ const Dashboard: React.FC = () => {
           maintenance={urgentMaintenance}
           currentPage={maintenancePage}
           totalPages={maintenancePagination?.totalPages || 1}
+          totalItems={maintenancePagination?.total || 0}
+          itemsPerPage={maintenancePagination?.limit || 10}
           onPageChange={handleMaintenancePageChange}
         />
       </div>

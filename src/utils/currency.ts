@@ -18,3 +18,7 @@ export const formatCurrency = (
 
   return `RWF ${numValue.toLocaleString("en-US")}`;
 };
+
+
+
+

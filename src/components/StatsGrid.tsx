@@ -1,5 +1,13 @@
 import React from "react";
-import { Building2, Users, UserCheck, Wrench, TrendingUp } from "lucide-react";
+import {
+  Building2,
+  UserCheck,
+  Wrench,
+  DollarSign,
+  AlertCircle,
+  Home,
+  Calendar,
+} from "lucide-react";
 import { formatCurrency } from "../utils/currency";
 import { StatCard } from "./StatCard";
 
@@ -8,7 +16,10 @@ interface DashboardStats {
   totalTenants: number;
   activeTenants: number;
   pendingMaintenance: number;
-  totalMonthlyRevenue: number;
+  totalRentCollected: number;
+  outstandingRent: number;
+  occupancyRate: number;
+  annualRevenue: number;
 }
 
 interface StatsGridProps {
@@ -25,37 +36,51 @@ export const StatsGrid: React.FC<StatsGridProps> = ({ stats }) => {
       bgColor: "bg-blue-50",
     },
     {
-      title: "Total Tenants",
-      value: stats.totalTenants,
-      icon: Users,
+      title: "Active Tenants",
+      value: stats.activeTenants,
+      icon: UserCheck,
       color: "text-green-600",
       bgColor: "bg-green-50",
     },
     {
-      title: "Active Tenants",
-      value: stats.activeTenants,
-      icon: UserCheck,
+      title: "Occupancy Rate",
+      value: `${stats.occupancyRate.toFixed(1)}%`,
+      icon: Home,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
+    },
+    {
+      title: "Total Rent Collected",
+      value: formatCurrency(stats.totalRentCollected),
+      icon: DollarSign,
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
+    },
+    {
+      title: "Outstanding Rent",
+      value: formatCurrency(stats.outstandingRent),
+      icon: AlertCircle,
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+    },
+    {
+      title: "Annual Revenue (Projected)",
+      value: formatCurrency(stats.annualRevenue),
+      icon: Calendar,
+      color: "text-orange-600",
+      bgColor: "bg-orange-50",
     },
     {
       title: "Pending Maintenance",
       value: stats.pendingMaintenance,
       icon: Wrench,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
-    },
-    {
-      title: "Monthly Revenue",
-      value: formatCurrency(stats.totalMonthlyRevenue),
-      icon: TrendingUp,
-      color: "text-emerald-600",
-      bgColor: "bg-emerald-50",
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {statCards.map((stat, index) => (
         <StatCard
           key={index}

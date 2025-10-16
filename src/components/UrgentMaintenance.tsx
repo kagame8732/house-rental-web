@@ -1,11 +1,13 @@
 import React from "react";
 import type { Maintenance } from "../types";
-import { Pagination } from "./Pagination";
+import Pagination from "./Pagination";
 
 interface UrgentMaintenanceProps {
   maintenance: Maintenance[];
   currentPage: number;
   totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
   onPageChange: (page: number) => void;
 }
 
@@ -13,6 +15,8 @@ export const UrgentMaintenance: React.FC<UrgentMaintenanceProps> = ({
   maintenance,
   currentPage,
   totalPages,
+  totalItems,
+  itemsPerPage,
   onPageChange,
 }) => {
   return (
@@ -56,11 +60,15 @@ export const UrgentMaintenance: React.FC<UrgentMaintenanceProps> = ({
           )}
         </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-        />
+        {totalPages > 1 && totalItems > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={onPageChange}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import type { Property } from "../types";
+import type { Property, PaginationParams } from "../types";
 import { formatCurrency } from "../utils/currency";
 import toast from "react-hot-toast";
+import Pagination from "../components/Pagination";
+import PropertiesSearchAndFilter from "../components/PropertiesSearchAndFilter";
+import { ExportData } from "../components/ExportData";
 
 const Properties: React.FC = () => {
   const { user, token } = useAuth();
@@ -12,6 +15,19 @@ const Properties: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+
+  // Pagination and filtering state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("DESC");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -21,49 +37,212 @@ const Properties: React.FC = () => {
     monthlyRent: "",
   });
 
+  const loadProperties = useCallback(
+    async (page = pagination.page) => {
+      try {
+        setLoading(true);
+
+        // Build pagination parameters
+        const params: PaginationParams = {
+          page,
+          limit: pagination.limit,
+          sortBy,
+          sortOrder,
+          search: searchTerm || undefined,
+          status: statusFilter || undefined,
+          type: typeFilter || undefined,
+        };
+
+        const response = await apiService.getProperties(params);
+        const propertiesData = response.data || [];
+
+        // Check availability for each property
+        const propertiesWithAvailability = await Promise.all(
+          propertiesData.map(async (property) => {
+            try {
+              const availabilityResponse =
+                await apiService.checkPropertyAvailability(property.id);
+              return {
+                ...property,
+                isAvailable: availabilityResponse.data?.isAvailable ?? false,
+              };
+            } catch (error) {
+              console.error(
+                `Failed to check availability for property ${property.id}:`,
+                error
+              );
+              return {
+                ...property,
+                isAvailable: true, // Default to available if check fails
+              };
+            }
+          })
+        );
+
+        setProperties(propertiesWithAvailability);
+
+        // Update pagination info
+        if (response.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            page: response.pagination!.page,
+            total: response.pagination!.total,
+            totalPages: response.pagination!.totalPages,
+          }));
+        }
+
+        if (page === 1) {
+          toast.success("Properties loaded successfully");
+        }
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to load properties"
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      pagination.page,
+      pagination.limit,
+      sortBy,
+      sortOrder,
+      searchTerm,
+      statusFilter,
+      typeFilter,
+    ]
+  );
+
+  // Filter change handlers
+  const handlePageChange = (page: number) => {
+    setPagination((prev) => ({ ...prev, page }));
+    // Load data with the new page immediately
+    loadPropertiesWithPage(page);
+  };
+
+  const loadPropertiesWithPage = useCallback(
+    async (page: number) => {
+      try {
+        setLoading(true);
+
+        // Build pagination parameters
+        const params: PaginationParams = {
+          page,
+          limit: pagination.limit,
+          sortBy,
+          sortOrder,
+          search: searchTerm || undefined,
+          status: statusFilter || undefined,
+          type: typeFilter || undefined,
+        };
+
+        const response = await apiService.getProperties(params);
+        const propertiesData = response.data || [];
+
+        // Check availability for each property
+        const propertiesWithAvailability = await Promise.all(
+          propertiesData.map(async (property) => {
+            try {
+              const availabilityResponse =
+                await apiService.checkPropertyAvailability(property.id);
+              return {
+                ...property,
+                isAvailable: availabilityResponse.data?.isAvailable ?? false,
+              };
+            } catch (error) {
+              console.error(
+                `Failed to check availability for property ${property.id}:`,
+                error
+              );
+              return {
+                ...property,
+                isAvailable: true, // Default to available if check fails
+              };
+            }
+          })
+        );
+
+        setProperties(propertiesWithAvailability);
+
+        // Update pagination info
+        if (response.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            page: response.pagination!.page,
+            total: response.pagination!.total,
+            totalPages: response.pagination!.totalPages,
+          }));
+        }
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to load properties"
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.limit, sortBy, sortOrder, searchTerm, statusFilter, typeFilter]
+  );
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleTypeChange = (value: string) => {
+    setTypeFilter(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortByChange = (value: string) => {
+    setSortBy(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleSortOrderChange = (value: "ASC" | "DESC") => {
+    setSortOrder(value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("");
+    setTypeFilter("");
+    setSortBy("createdAt");
+    setSortOrder("DESC");
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
   useEffect(() => {
     if (user && token) {
       loadProperties();
     }
-  }, [user, token]);
+  }, [user, token, loadProperties]);
 
-  const loadProperties = async () => {
-    try {
-      setLoading(true);
-      const response = await apiService.getProperties();
-      const propertiesData = response.data || [];
+  // Debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (user && token) {
+        loadPropertiesWithPage(1);
+      }
+    }, 300);
 
-      // Check availability for each property
-      const propertiesWithAvailability = await Promise.all(
-        propertiesData.map(async (property) => {
-          try {
-            const availabilityResponse =
-              await apiService.checkPropertyAvailability(property.id);
-            return {
-              ...property,
-              isAvailable: availabilityResponse.data?.isAvailable ?? false,
-            };
-          } catch (error) {
-            console.error(
-              `Failed to check availability for property ${property.id}:`,
-              error
-            );
-            return {
-              ...property,
-              isAvailable: true, // Default to available if check fails
-            };
-          }
-        })
-      );
-
-      setProperties(propertiesWithAvailability);
-      toast.success("Properties loaded successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load properties");
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => clearTimeout(timeoutId);
+  }, [
+    searchTerm,
+    statusFilter,
+    typeFilter,
+    sortBy,
+    sortOrder,
+    user,
+    token,
+    loadPropertiesWithPage,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,6 +463,38 @@ const Properties: React.FC = () => {
         </div>
       )}
 
+      {/* Search and Filter */}
+      <PropertiesSearchAndFilter
+        searchTerm={searchTerm}
+        onSearchChange={handleSearchChange}
+        statusFilter={statusFilter}
+        onStatusChange={handleStatusChange}
+        typeFilter={typeFilter}
+        onTypeChange={handleTypeChange}
+        sortBy={sortBy}
+        onSortByChange={handleSortByChange}
+        sortOrder={sortOrder}
+        onSortOrderChange={handleSortOrderChange}
+        onClearFilters={handleClearFilters}
+      />
+
+      {/* Export Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Export Properties
+            </h2>
+            <p className="text-sm text-gray-600">Download properties data</p>
+          </div>
+          <ExportData
+            properties={properties}
+            dataType="properties"
+            title="Properties Report"
+          />
+        </div>
+      </div>
+
       {/* Properties List */}
       <div className="card">
         <div className="card-header">
@@ -410,6 +621,17 @@ const Properties: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* Pagination */}
+          {pagination.totalPages > 1 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={handlePageChange}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit}
+            />
           )}
         </div>
       </div>
