@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, X } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Maintenance, Property, PaginationParams } from "../types";
-import toast from "react-hot-toast";
+import { successToast, errorToast } from "../utils/toast";
 import Pagination from "../components/Pagination";
 import MaintenanceSearchAndFilter from "../components/MaintenanceSearchAndFilter";
 import { ExportData } from "../components/ExportData";
@@ -78,10 +78,13 @@ const MaintenancePage: React.FC = () => {
         }
 
         if (page === 1) {
-          toast.success("Data loaded successfully");
+          successToast("maintenance", "Data loaded successfully");
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Failed to load data");
+        errorToast(
+          "maintenance",
+          err instanceof Error ? err.message : "Failed to load data"
+        );
       } finally {
         setLoading(false);
       }
@@ -140,7 +143,10 @@ const MaintenancePage: React.FC = () => {
           }));
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Failed to load data");
+        errorToast(
+          "maintenance",
+          err instanceof Error ? err.message : "Failed to load data"
+        );
       } finally {
         setLoading(false);
       }
@@ -241,10 +247,10 @@ const MaintenancePage: React.FC = () => {
           editingMaintenance.id,
           maintenanceData
         );
-        toast.success("Maintenance request updated successfully");
+        successToast("maintenance", "Maintenance request updated successfully");
       } else {
         await apiService.createMaintenance(maintenanceData);
-        toast.success("Maintenance request created successfully");
+        successToast("maintenance", "Maintenance request created successfully");
       }
 
       setFormData({
@@ -261,7 +267,10 @@ const MaintenancePage: React.FC = () => {
       setEditingMaintenance(null);
       await loadData();
     } catch (err: any) {
-      toast.error(err.message || "Failed to save maintenance request");
+      errorToast(
+        "maintenance",
+        err.message || "Failed to save maintenance request"
+      );
     } finally {
       setLoading(false);
     }
@@ -291,10 +300,13 @@ const MaintenancePage: React.FC = () => {
     try {
       setLoading(true);
       await apiService.deleteMaintenance(id);
-      toast.success("Maintenance request deleted successfully");
+      successToast("maintenance", "Maintenance request deleted successfully");
       await loadData();
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete maintenance request");
+      errorToast(
+        "maintenance",
+        err.message || "Failed to delete maintenance request"
+      );
     } finally {
       setLoading(false);
     }
@@ -369,15 +381,24 @@ const MaintenancePage: React.FC = () => {
 
       {/* Add/Edit Form */}
       {showForm && (
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {editingMaintenance
-                ? "Edit Maintenance Request"
-                : "Add New Maintenance Request"}
-            </h3>
-          </div>
-          <div className="card-content">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingMaintenance
+                  ? "Edit Maintenance Request"
+                  : "Add New Maintenance Request"}
+              </h3>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -554,6 +575,7 @@ const MaintenancePage: React.FC = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

@@ -149,3 +149,4 @@ const PropertiesSearchAndFilter: React.FC<PropertiesSearchAndFilterProps> = ({
 
 export default PropertiesSearchAndFilter;
 
+
