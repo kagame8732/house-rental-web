@@ -133,7 +133,10 @@ export const useDashboardData = () => {
         totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0;
 
       // Annual revenue (projected) - based on total rent collected
-      const annualRevenue = totalRentCollected > 0 ? (totalRentCollected / Math.max(1, allTenants.length)) * 12 : 0;
+      const annualRevenue =
+        totalRentCollected > 0
+          ? (totalRentCollected / Math.max(1, allTenants.length)) * 12
+          : 0;
 
       // Calculate stats
       setStats({
@@ -158,7 +161,7 @@ export const useDashboardData = () => {
 
       // Filter urgent maintenance and set pagination for urgent items only
       const urgentItems = maintenance.filter(
-        (m) => m.priority === "urgent" || m.priority === "high"
+        (m) => m.priority === "urgent" || m.priority === "high",
       );
       setUrgentMaintenance(urgentItems.slice(0, 5));
 

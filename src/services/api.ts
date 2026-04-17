@@ -10,6 +10,7 @@ import type {
   Tenant,
   Maintenance,
   PaginationParams,
+  ReportOverview,
 } from "../types";
 
 class ApiService {
@@ -233,6 +234,13 @@ class ApiService {
     const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(
       `/maintenance/${id}`
     );
+    return response.data;
+  }
+
+  // Reports endpoints
+  async getReportOverview(): Promise<ApiResponse<ReportOverview>> {
+    const response: AxiosResponse<ApiResponse<ReportOverview>> =
+      await this.api.get("/reports/overview");
     return response.data;
   }
 }
