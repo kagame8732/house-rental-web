@@ -1,6 +1,14 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Building2, Users, Wrench, LogOut, X } from "lucide-react";
+import {
+  Home,
+  Building2,
+  Users,
+  Wrench,
+  FileBarChart2,
+  LogOut,
+  X,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface SidebarProps {
@@ -17,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     { name: "Properties", href: "/properties", icon: Building2 },
     { name: "Tenants", href: "/tenants", icon: Users },
     { name: "Maintenance", href: "/maintenance", icon: Wrench },
+    { name: "Reports", href: "/reports", icon: FileBarChart2 },
   ];
 
   const isActive = (path: string) => {

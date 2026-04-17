@@ -6,6 +6,7 @@ import Dashboard from "../../pages/Dashboard";
 import Properties from "../../pages/Properties";
 import Tenants from "../../pages/Tenants";
 import MaintenancePage from "../../pages/Maintenance";
+import Reports from "../../pages/Reports";
 
 const Layout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -26,6 +27,8 @@ const Layout: React.FC = () => {
         return "Tenants";
       case "/maintenance":
         return "Maintenance";
+      case "/reports":
+        return "Reports";
       default:
         return "Dashboard";
     }
@@ -44,6 +47,7 @@ const Layout: React.FC = () => {
             <Route path="/properties" element={<Properties />} />
             <Route path="/tenants" element={<Tenants />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

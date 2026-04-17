@@ -3,14 +3,16 @@
  * @param value - The value to format (number or string)
  * @returns Formatted currency string
  */
+
 export const formatCurrency = (
-  value: number | string | null | undefined
+  value: number | string | null | undefined,
 ): string => {
   if (value === null || value === undefined || value === "") {
     return "Not set";
   }
 
-  const numValue = typeof value === "string" ? parseFloat(value) : value;
+  const numValue =
+    typeof value === "string" ? parseInt(value, 10) : Math.floor(value);
 
   if (isNaN(numValue)) {
     return "Not set";
@@ -18,8 +20,3 @@ export const formatCurrency = (
 
   return `RWF ${numValue.toLocaleString("en-US")}`;
 };
-
-
-
-
-

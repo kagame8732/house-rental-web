@@ -56,6 +56,27 @@ export interface Maintenance {
   updatedAt: string;
 }
 
+export interface ReportOverview {
+  totals: {
+    properties: number;
+    activeProperties: number;
+    tenants: number;
+    activeTenants: number;
+    maintenance: number;
+    pendingMaintenance: number;
+  };
+  financial: {
+    expectedMonthlyRent: number;
+    collectedAmount: number;
+    outstandingAmount: number;
+  };
+  breakdowns: {
+    tenantStatus: Record<string, number>;
+    maintenanceStatus: Record<string, number>;
+    maintenancePriority: Record<string, number>;
+  };
+}
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
