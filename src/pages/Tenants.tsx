@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, X } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Tenant, Property, PaginationParams } from "../types";
 import { formatCurrency } from "../utils/currency";
-import toast from "react-hot-toast";
+import { successToast, errorToast } from "../utils/toast";
 import Pagination from "../components/Pagination";
 import SearchAndFilter from "../components/SearchAndFilter";
 import { ExportData } from "../components/ExportData";
@@ -93,10 +93,13 @@ const Tenants: React.FC = () => {
         }
 
         if (page === 1) {
-          toast.success("Data loaded successfully");
+          successToast("tenants", "Data loaded successfully");
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Failed to load data");
+        errorToast(
+          "tenants",
+          err instanceof Error ? err.message : "Failed to load data"
+        );
       } finally {
         setLoading(false);
       }
@@ -156,10 +159,10 @@ const Tenants: React.FC = () => {
 
       if (editingTenant) {
         await apiService.updateTenant(editingTenant.id, submitData);
-        toast.success("Tenant updated successfully");
+        successToast("tenants", "Tenant updated successfully");
       } else {
         await apiService.createTenant(submitData);
-        toast.success("Tenant created successfully");
+        successToast("tenants", "Tenant created successfully");
       }
 
       setFormData({
@@ -182,7 +185,10 @@ const Tenants: React.FC = () => {
       setEditingTenant(null);
       await loadData();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to save tenant");
+      errorToast(
+        "tenants",
+        err instanceof Error ? err.message : "Failed to save tenant"
+      );
     } finally {
       setLoading(false);
     }
@@ -221,7 +227,8 @@ const Tenants: React.FC = () => {
       setEditingTenant(tenant);
       setShowForm(true);
     } catch (err: unknown) {
-      toast.error(
+      errorToast(
+        "tenants",
         err instanceof Error ? err.message : "Failed to load data for editing"
       );
     } finally {
@@ -235,10 +242,11 @@ const Tenants: React.FC = () => {
     try {
       setLoading(true);
       await apiService.deleteTenant(id);
-      toast.success("Tenant deleted successfully");
+      successToast("tenants", "Tenant deleted successfully");
       await loadData();
     } catch (err: unknown) {
-      toast.error(
+      errorToast(
+        "tenants",
         err instanceof Error ? err.message : "Failed to delete tenant"
       );
     } finally {
@@ -406,7 +414,10 @@ const Tenants: React.FC = () => {
           }));
         }
       } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : "Failed to load data");
+        errorToast(
+          "tenants",
+          err instanceof Error ? err.message : "Failed to load data"
+        );
       } finally {
         setLoading(false);
       }
@@ -508,13 +519,22 @@ const Tenants: React.FC = () => {
 
           {/* Add/Edit Form */}
           {showForm && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {editingTenant ? "Edit Tenant" : "Add New Tenant"}
-                </h3>
-              </div>
-              <div className="p-6">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+              <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {editingTenant ? "Edit Tenant" : "Add New Tenant"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                    aria-label="Close modal"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -881,6 +901,7 @@ const Tenants: React.FC = () => {
                     </button>
                   </div>
                 </form>
+                </div>
               </div>
             </div>
           )}

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, X } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Property, PaginationParams } from "../types";
 import { formatCurrency } from "../utils/currency";
-import toast from "react-hot-toast";
+import { successToast, errorToast } from "../utils/toast";
 import Pagination from "../components/Pagination";
 import PropertiesSearchAndFilter from "../components/PropertiesSearchAndFilter";
 import { ExportData } from "../components/ExportData";
@@ -92,10 +92,11 @@ const Properties: React.FC = () => {
         }
 
         if (page === 1) {
-          toast.success("Properties loaded successfully");
+          successToast("properties", "Properties loaded successfully");
         }
       } catch (err: unknown) {
-        toast.error(
+        errorToast(
+          "properties",
           err instanceof Error ? err.message : "Failed to load properties"
         );
       } finally {
@@ -174,7 +175,8 @@ const Properties: React.FC = () => {
           }));
         }
       } catch (err: unknown) {
-        toast.error(
+        errorToast(
+          "properties",
           err instanceof Error ? err.message : "Failed to load properties"
         );
       } finally {
@@ -259,10 +261,10 @@ const Properties: React.FC = () => {
 
       if (editingProperty) {
         await apiService.updateProperty(editingProperty.id, submitData);
-        toast.success("Property updated successfully");
+        successToast("properties", "Property updated successfully");
       } else {
         await apiService.createProperty(submitData);
-        toast.success("Property created successfully");
+        successToast("properties", "Property created successfully");
       }
 
       setFormData({
@@ -277,7 +279,7 @@ const Properties: React.FC = () => {
       await loadProperties();
     } catch (err: any) {
       console.error("Property submission error:", err);
-      toast.error(err.message || "Failed to save property");
+      errorToast("properties", err.message || "Failed to save property");
     } finally {
       setLoading(false);
     }
@@ -301,10 +303,10 @@ const Properties: React.FC = () => {
     try {
       setLoading(true);
       await apiService.deleteProperty(id);
-      toast.success("Property deleted successfully");
+      successToast("properties", "Property deleted successfully");
       await loadProperties();
     } catch (err: any) {
-      toast.error(err.message || "Failed to delete property");
+      errorToast("properties", err.message || "Failed to delete property");
     } finally {
       setLoading(false);
     }
@@ -341,13 +343,22 @@ const Properties: React.FC = () => {
 
       {/* Add/Edit Form */}
       {showForm && (
-        <div className="card">
-          <div className="card-header">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {editingProperty ? "Edit Property" : "Add New Property"}
-            </h3>
-          </div>
-          <div className="card-content">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl border border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {editingProperty ? "Edit Property" : "Add New Property"}
+              </h3>
+              <button
+                type="button"
+                onClick={resetForm}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                aria-label="Close modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -459,6 +470,7 @@ const Properties: React.FC = () => {
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}
