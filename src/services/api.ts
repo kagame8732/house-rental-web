@@ -238,9 +238,9 @@ class ApiService {
   }
 
   // Reports endpoints
-  async getReportOverview(): Promise<ApiResponse<ReportOverview>> {
+  async getReportOverview(year?: number): Promise<ApiResponse<ReportOverview>> {
     const response: AxiosResponse<ApiResponse<ReportOverview>> =
-      await this.api.get("/reports/overview");
+      await this.api.get("/reports/overview", { params: { year } });
     return response.data;
   }
 }
