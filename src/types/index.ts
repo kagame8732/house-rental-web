@@ -75,6 +75,27 @@ export interface ReportOverview {
     maintenanceStatus: Record<string, number>;
     maintenancePriority: Record<string, number>;
   };
+  annualPayment: {
+    year: number;
+    activeTenants: number;
+    tenants: Array<{
+      id: string;
+      name: string;
+      monthlyRent: number;
+      totalPaid: number;
+      months: Array<{
+        month: number;
+        amount: number;
+        status: "paid" | "pending" | "late_unpaid" | "not_yet_due";
+      }>;
+    }>;
+    monthlyTotals: number[];
+    collectedYtd: number;
+    paidOnTime: number;
+    dueMonths: number;
+    latePayments: number;
+    unpaidMonths: number;
+  };
 }
 
 export interface ApiResponse<T = unknown> {
