@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Edit, Trash2, Eye, X } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, X, DollarSign } from "lucide-react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
 import type { Tenant, Property, PaginationParams } from "../types";
@@ -20,6 +20,7 @@ const Tenants: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   const [viewingTenant, setViewingTenant] = useState<Tenant | null>(null);
+  const [paymentTenant, setPaymentTenant] = useState<Tenant | null>(null);
   const [validationErrors, setValidationErrors] = useState<{
     phone?: string;
     email?: string;
@@ -53,6 +54,13 @@ const Tenants: React.FC = () => {
     monthsPaid: "",
     stayStartDate: "",
     stayEndDate: "",
+  });
+  const [paymentFormData, setPaymentFormData] = useState({
+    amount: "",
+    monthsPaid: "1",
+    paymentDate: new Date().toISOString().split("T")[0],
+    paymentMethod: "mobile_money" as "cash" | "bank" | "mobile_money",
+    stayStartDate: "",
   });
 
   const loadData = useCallback(
@@ -196,6 +204,52 @@ const Tenants: React.FC = () => {
 
   const handleView = (tenant: Tenant) => {
     setViewingTenant(tenant);
+  };
+
+  const openPaymentModal = (tenant: Tenant) => {
+    const property = allProperties.find((item) => item.id === tenant.propertyId);
+    const monthlyRent = property?.monthlyRent || tenant.property?.monthlyRent || 0;
+    const today = new Date().toISOString().split("T")[0];
+
+    setPaymentTenant(tenant);
+    setPaymentFormData({
+      amount: monthlyRent ? monthlyRent.toString() : "",
+      monthsPaid: "1",
+      paymentDate: today,
+      paymentMethod: tenant.paymentMethod || "mobile_money",
+      stayStartDate: tenant.stayStartDate || today,
+    });
+  };
+
+  const handleRecordPayment = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!paymentTenant) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await apiService.recordTenantPayment(paymentTenant.id, {
+        amount: paymentFormData.amount
+          ? Number(paymentFormData.amount)
+          : undefined,
+        monthsPaid: Number(paymentFormData.monthsPaid),
+        paymentDate: paymentFormData.paymentDate || undefined,
+        paymentMethod: paymentFormData.paymentMethod,
+        stayStartDate: paymentFormData.stayStartDate || undefined,
+      });
+      successToast("tenants", "Payment recorded successfully");
+      setPaymentTenant(null);
+      await loadData();
+    } catch (err: unknown) {
+      errorToast(
+        "tenants",
+        err instanceof Error ? err.message : "Failed to record payment"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEdit = async (tenant: Tenant) => {
@@ -489,6 +543,11 @@ const Tenants: React.FC = () => {
   const getPropertyName = (propertyId: string) => {
     const property = allProperties.find((p) => p.id === propertyId);
     return property ? property.name : "Unknown Property";
+  };
+
+  const getPropertyMonthlyRent = (propertyId: string): number => {
+    const property = allProperties.find((p) => p.id === propertyId);
+    return property?.monthlyRent || 0;
   };
 
   return (
@@ -1118,6 +1177,13 @@ const Tenants: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
                               <button
+                                onClick={() => openPaymentModal(tenant)}
+                                className="inline-flex items-center p-2 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors duration-200"
+                                title="Record Payment"
+                              >
+                                <DollarSign className="h-4 w-4" />
+                              </button>
+                              <button
                                 onClick={() => handleView(tenant)}
                                 className="inline-flex items-center p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200"
                                 title="View Details"
@@ -1161,6 +1227,174 @@ const Tenants: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Record Payment Modal */}
+      {paymentTenant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-xl rounded-xl border border-gray-200 bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Record Payment
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {paymentTenant.name} - {getPropertyName(paymentTenant.propertyId)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPaymentTenant(null)}
+                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                aria-label="Close payment modal"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRecordPayment} className="space-y-5 p-6">
+              <div className="rounded-lg bg-blue-50 p-4">
+                <p className="text-sm font-medium text-blue-900">
+                  Monthly rent:{" "}
+                  {formatCurrency(getPropertyMonthlyRent(paymentTenant.propertyId))}
+                </p>
+                <p className="mt-1 text-sm text-blue-700">
+                  Already paid: {paymentTenant.monthsPaid || 0} months - Total{" "}
+                  {formatCurrency(paymentTenant.totalAmount || 0)}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Payment Amount (RWF)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="0.01"
+                    required
+                    value={paymentFormData.amount}
+                    onChange={(event) =>
+                      setPaymentFormData({
+                        ...paymentFormData,
+                        amount: event.target.value,
+                      })
+                    }
+                    className="input"
+                    placeholder="Enter paid amount"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Months Paid
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={paymentFormData.monthsPaid}
+                    onChange={(event) => {
+                      const months = event.target.value;
+                      const monthlyRent = getPropertyMonthlyRent(
+                        paymentTenant.propertyId
+                      );
+                      setPaymentFormData({
+                        ...paymentFormData,
+                        monthsPaid: months,
+                        amount:
+                          monthlyRent && Number(months) > 0
+                            ? (monthlyRent * Number(months)).toString()
+                            : paymentFormData.amount,
+                      });
+                    }}
+                    className="input"
+                    placeholder="1"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Payment Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={paymentFormData.paymentDate}
+                    onChange={(event) =>
+                      setPaymentFormData({
+                        ...paymentFormData,
+                        paymentDate: event.target.value,
+                      })
+                    }
+                    className="input"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Payment Method
+                  </label>
+                  <select
+                    value={paymentFormData.paymentMethod}
+                    onChange={(event) =>
+                      setPaymentFormData({
+                        ...paymentFormData,
+                        paymentMethod: event.target.value as
+                          | "cash"
+                          | "bank"
+                          | "mobile_money",
+                      })
+                    }
+                    className="input"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="bank">Bank Transfer</option>
+                    <option value="mobile_money">Mobile Money</option>
+                  </select>
+                </div>
+
+                {!paymentTenant.stayStartDate && (
+                  <div className="md:col-span-2">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Stay Start Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={paymentFormData.stayStartDate}
+                      onChange={(event) =>
+                        setPaymentFormData({
+                          ...paymentFormData,
+                          stayStartDate: event.target.value,
+                        })
+                      }
+                      className="input"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-5">
+                <button
+                  type="button"
+                  onClick={() => setPaymentTenant(null)}
+                  className="btn btn-outline h-10"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary h-10 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading ? "Recording..." : "Record Payment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* View Tenant Modal */}
       {viewingTenant && (

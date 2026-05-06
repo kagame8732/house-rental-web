@@ -120,6 +120,14 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface RecordPaymentRequest {
+  amount?: number;
+  monthsPaid: number;
+  paymentDate?: string;
+  paymentMethod: "cash" | "bank" | "mobile_money";
+  stayStartDate?: string;
+}
+
 export interface PaginationParams {
   page?: number;
   limit?: number;

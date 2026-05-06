@@ -11,6 +11,7 @@ import type {
   Maintenance,
   PaginationParams,
   ReportOverview,
+  RecordPaymentRequest,
 } from "../types";
 
 class ApiService {
@@ -186,6 +187,17 @@ class ApiService {
   ): Promise<ApiResponse<Tenant>> {
     const response: AxiosResponse<ApiResponse<Tenant>> = await this.api.put(
       `/tenants/${id}`,
+      data
+    );
+    return response.data;
+  }
+
+  async recordTenantPayment(
+    id: string,
+    data: RecordPaymentRequest
+  ): Promise<ApiResponse<Tenant>> {
+    const response: AxiosResponse<ApiResponse<Tenant>> = await this.api.post(
+      `/tenants/${id}/payments`,
       data
     );
     return response.data;
