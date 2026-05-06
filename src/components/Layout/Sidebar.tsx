@@ -6,6 +6,7 @@ import {
   Users,
   Wrench,
   FileBarChart2,
+  CreditCard,
   LogOut,
   X,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Properties", href: "/properties", icon: Building2 },
     { name: "Tenants", href: "/tenants", icon: Users },
+    { name: "Payments", href: "/payments", icon: CreditCard },
     { name: "Maintenance", href: "/maintenance", icon: Wrench },
     { name: "Reports", href: "/reports", icon: FileBarChart2 },
   ];

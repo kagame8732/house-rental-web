@@ -180,7 +180,7 @@ export const ExportData: React.FC<ExportDataProps> = ({
           <head>
             <title>${title} - ${new Date().toLocaleDateString()}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
+              body { font-family: "IBM Plex Sans", Arial, sans-serif; margin: 20px; }
               .header { text-align: center; margin-bottom: 30px; }
               .section { margin-bottom: 30px; }
               .section h2 { color: #333; border-bottom: 2px solid #2563eb; padding-bottom: 5px; }

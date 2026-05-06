@@ -8,9 +8,11 @@ import type {
   User,
   Property,
   Tenant,
+  Lease,
   Maintenance,
   PaginationParams,
   ReportOverview,
+  RecordPaymentRequest,
 } from "../types";
 
 class ApiService {
@@ -191,9 +193,29 @@ class ApiService {
     return response.data;
   }
 
+  async recordTenantPayment(
+    id: string,
+    data: RecordPaymentRequest
+  ): Promise<ApiResponse<Tenant>> {
+    const response: AxiosResponse<ApiResponse<Tenant>> = await this.api.post(
+      `/tenants/${id}/payments`,
+      data
+    );
+    return response.data;
+  }
+
   async deleteTenant(id: string): Promise<ApiResponse<void>> {
     const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(
       `/tenants/${id}`
+    );
+    return response.data;
+  }
+
+  // Leases endpoints
+  async getLeases(params?: PaginationParams): Promise<ApiResponse<Lease[]>> {
+    const response: AxiosResponse<ApiResponse<Lease[]>> = await this.api.get(
+      "/leases",
+      { params }
     );
     return response.data;
   }

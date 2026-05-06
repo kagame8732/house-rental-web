@@ -30,12 +30,28 @@ export interface Tenant {
   payment?: number;
   paymentDate?: string;
   paymentMethod?: "cash" | "bank" | "mobile_money";
+  paymentStatus?: "pending" | "paid" | "late";
   monthsPaid?: number;
   stayStartDate?: string;
   stayEndDate?: string;
   totalAmount?: number;
   propertyId: string;
   property?: Property;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Lease {
+  id: string;
+  propertyId: string;
+  tenantId: string;
+  startDate: string;
+  endDate: string;
+  monthlyRent: number;
+  status: "active" | "expired" | "terminated";
+  notes?: string;
+  property?: Property;
+  tenant?: Tenant;
   createdAt: string;
   updatedAt: string;
 }
@@ -118,6 +134,15 @@ export interface LoginRequest {
 export interface LoginResponse {
   user: User;
   token: string;
+}
+
+export interface RecordPaymentRequest {
+  amount?: number;
+  monthsPaid: number;
+  paymentDate?: string;
+  paymentMethod: "cash" | "bank" | "mobile_money";
+  paymentStatus?: "pending" | "paid" | "late";
+  stayStartDate?: string;
 }
 
 export interface PaginationParams {
