@@ -8,6 +8,7 @@ import type {
   User,
   Property,
   Tenant,
+  Lease,
   Maintenance,
   PaginationParams,
   ReportOverview,
@@ -206,6 +207,15 @@ class ApiService {
   async deleteTenant(id: string): Promise<ApiResponse<void>> {
     const response: AxiosResponse<ApiResponse<void>> = await this.api.delete(
       `/tenants/${id}`
+    );
+    return response.data;
+  }
+
+  // Leases endpoints
+  async getLeases(params?: PaginationParams): Promise<ApiResponse<Lease[]>> {
+    const response: AxiosResponse<ApiResponse<Lease[]>> = await this.api.get(
+      "/leases",
+      { params }
     );
     return response.data;
   }

@@ -5,6 +5,7 @@ import Header from "./Header";
 import Dashboard from "../../pages/Dashboard";
 import Properties from "../../pages/Properties";
 import Tenants from "../../pages/Tenants";
+import Payments from "../../pages/Payments";
 import MaintenancePage from "../../pages/Maintenance";
 import Reports from "../../pages/Reports";
 
@@ -25,6 +26,8 @@ const Layout: React.FC = () => {
         return "Properties";
       case "/tenants":
         return "Tenants";
+      case "/payments":
+        return "Payments";
       case "/maintenance":
         return "Maintenance";
       case "/reports":
@@ -46,6 +49,7 @@ const Layout: React.FC = () => {
             <Route path="/" element={<Dashboard />} />
             <Route path="/properties" element={<Properties />} />
             <Route path="/tenants" element={<Tenants />} />
+            <Route path="/payments" element={<Payments />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="*" element={<Navigate to="/" replace />} />

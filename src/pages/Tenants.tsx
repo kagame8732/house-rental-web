@@ -550,6 +550,23 @@ const Tenants: React.FC = () => {
     return property?.monthlyRent || 0;
   };
 
+  const getPaymentStatusBadge = (status: Tenant["paymentStatus"]) => {
+    const paymentStatus = status || "pending";
+    const styles = {
+      paid: "bg-green-100 text-green-800",
+      pending: "bg-yellow-100 text-yellow-800",
+      late: "bg-red-100 text-red-800",
+    };
+
+    return (
+      <span
+        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${styles[paymentStatus]}`}
+      >
+        {paymentStatus}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -1045,6 +1062,9 @@ const Tenants: React.FC = () => {
                           Payment
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Payment Status
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Payment Date
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -1117,6 +1137,9 @@ const Tenants: React.FC = () => {
                             <div className="text-sm text-gray-900">
                               {formatCurrency(tenant.payment)}
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getPaymentStatusBadge(tenant.paymentStatus)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">
@@ -1523,6 +1546,14 @@ const Tenants: React.FC = () => {
                       <p className="mt-1 text-sm text-gray-900">
                         {formatCurrency(viewingTenant.payment)}
                       </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Payment Status
+                      </label>
+                      <div className="mt-1">
+                        {getPaymentStatusBadge(viewingTenant.paymentStatus)}
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">

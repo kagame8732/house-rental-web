@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiService } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import type { Tenant, Maintenance, Property } from "../types";
+import type { Tenant, Maintenance, Property, Lease } from "../types";
 import toast from "react-hot-toast";
 
 interface DashboardStats {
@@ -39,6 +39,8 @@ export const useDashboardData = () => {
 
   // Data state
   const [recentTenants, setRecentTenants] = useState<Tenant[]>([]);
+  const [allTenants, setAllTenants] = useState<Tenant[]>([]);
+  const [activeLeases, setActiveLeases] = useState<Lease[]>([]);
   const [urgentMaintenance, setUrgentMaintenance] = useState<Maintenance[]>([]);
   const [allMaintenance, setAllMaintenance] = useState<Maintenance[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -69,6 +71,7 @@ export const useDashboardData = () => {
         activeTenantsRes,
         pendingMaintenanceRes,
         allTenantsRes,
+        activeLeasesRes,
       ] = await Promise.all([
         apiService.getProperties({ limit: 10 }),
         apiService.getTenants({
@@ -85,7 +88,8 @@ export const useDashboardData = () => {
         }),
         apiService.getTenants({ status: "active" }),
         apiService.getMaintenance({ status: "pending" }),
-        apiService.getTenants(), // Get all tenants for analytics
+        apiService.getTenants({ limit: 100 }), // Get all tenants for analytics
+        apiService.getLeases({ status: "active", limit: 100 }),
       ]);
 
       const properties = propertiesRes.data || [];
@@ -93,6 +97,7 @@ export const useDashboardData = () => {
       const maintenance = maintenanceRes.data || [];
       const activeTenants = activeTenantsRes.data || [];
       const allTenants = allTenantsRes.data || [];
+      const activeLeases = activeLeasesRes.data || [];
 
       // Calculate analytics metrics
       const totalRentCollected = allTenants.reduce((sum, tenant) => {
@@ -156,6 +161,8 @@ export const useDashboardData = () => {
 
       // Set data
       setRecentTenants(tenants);
+      setAllTenants(allTenants);
+      setActiveLeases(activeLeases);
       setProperties(properties);
       setAllMaintenance(maintenance);
 
@@ -212,6 +219,8 @@ export const useDashboardData = () => {
     // Data
     stats,
     recentTenants,
+    allTenants,
+    activeLeases,
     urgentMaintenance,
     allMaintenance,
     properties,
